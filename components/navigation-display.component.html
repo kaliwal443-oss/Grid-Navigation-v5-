@@ -1,0 +1,26 @@
+<div class="navigation-panel-container">
+    <div class="navigation-panel">
+        <div class="target-info">
+            <p class="target-label">TARGET</p>
+            <h2 class="target-name" [title]="targetPoint.name">{{ targetPoint.name }}</h2>
+            <button (click)="stop.emit()" class="stop-button">Stop Nav</button>
+        </div>
+        <div class="arrow-dial">
+            <div class="arrow-container" [style.transform]="'rotate(' + rotation + 'deg)'">
+                <svg width="80" height="80" viewBox="0 0 24 24" class="arrow-svg" [class.on-bearing]="isOnBearing">
+                    <path d="M12 2L2.5 21.5L12 17L21.5 21.5L12 2Z" />
+                </svg>
+            </div>
+        </div>
+        <div class="data-pods">
+            <div class="data-pod">
+                <p class="pod-label">DISTANCE</p>
+                <p class="pod-value">{{ measurementService.formatDistance(distance) }}</p>
+            </div>
+            <div class="data-pod">
+                <p class="pod-label">BEARING</p>
+                <p class="pod-value">{{ bearing.toFixed(0) }}°</p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grid Navigation v4</title>
+
+    <!-- PWA / TWA Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Grid Nav">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/index.css">
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-leaflet": "https://aistudiocdn.com/react-leaflet@^5.0.0",
+    "leaflet": "https://aistudiocdn.com/leaflet@^1.9.4",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.552.0",
+    "zone.js": "https://aistudiocdn.com/zone.js@^0.15.1",
+    "@angular/platform-browser-dynamic": "https://aistudiocdn.com/@angular/platform-browser-dynamic@^20.3.10",
+    "@angular/core": "https://aistudiocdn.com/@angular/core@^20.3.10",
+    "@angular/platform-browser": "https://aistudiocdn.com/@angular/platform-browser@^20.3.10",
+    "@angular/forms": "https://aistudiocdn.com/@angular/forms@^20.3.10",
+    "@angular/common": "https://aistudiocdn.com/@angular/common@^20.3.10",
+    "@angular/router": "https://aistudiocdn.com/@angular/router@^20.3.10",
+    "rxjs": "https://aistudiocdn.com/rxjs@^7.8.2"
+  }
+}
+</script>
+</head>
+<body class="overflow-hidden h-screen">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

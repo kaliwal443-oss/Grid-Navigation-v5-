@@ -1,0 +1,8 @@
+{
+  "name": "Copy of Grid Navigation v5",
+  "description": "A tactical grid navigation application with a topographic map, UTM coordinates, GPS satellite view, and a compass. Provides advanced map settings for professionals.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ]
+}

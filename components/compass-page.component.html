@@ -1,0 +1,72 @@
+<div class="h-full w-full flex flex-col items-center justify-center bg-[var(--color-background)] p-4 text-white overflow-hidden" *ngIf="orientation">
+    <h1 class="text-xl font-bold text-center text-[var(--color-accent-hover)] mb-4 flex-shrink-0">Compass</h1>
+    
+    <div class="relative w-72 h-72 sm:w-80 sm:h-80 flex items-center justify-center flex-shrink-0">
+        <svg class="absolute w-full h-full" viewBox="0 0 200 200">
+            <defs>
+                <radialGradient id="bezelGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                    <stop offset="85%" stop-color="var(--color-surface)" />
+                    <stop offset="100%" stop-color="var(--color-surface-lighter)" />
+                </radialGradient>
+                <filter id="innerShadow"><feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" /><feOffset in="blur" dx="0" dy="0" result="offsetBlur" /><feFlood flood-color="#000" flood-opacity="0.5" result="flood" /><feComposite in="flood" in2="offsetBlur" operator="in" result="shadow" /><feComposite in="SourceGraphic" in2="shadow" operator="over" /></filter>
+            </defs>
+            <circle cx="100" cy="100" r="100" fill="url(#bezelGradient)" />
+            <circle cx="100" cy="100" r="96" fill="transparent" stroke="var(--color-background)" stroke-width="1" filter="url(#innerShadow)"/>
+        </svg>
+        <div class="absolute w-[96%] h-[96%] transition-transform duration-100 ease-linear" [style.transform]="'rotate(' + (-displayHeading) + 'deg)'">
+            <svg viewBox="0 0 200 200" class="w-full h-full">
+                <circle cx="100" cy="100" r="96" fill="var(--color-surface)" />
+                <line *ngFor="let i of [].constructor(72); let idx = index"
+                    [attr.x1]="100" [attr.y1]="8" 
+                    [attr.x2]="100" [attr.y2]="(idx * 5 % 90 === 0) ? 22 : (idx * 5 % 15 === 0) ? 16 : 12"
+                    stroke="var(--color-text-secondary)" 
+                    [attr.stroke-width]="(idx * 5 % 15 === 0) ? 1 : 0.5"
+                    [attr.transform]="'rotate(' + (idx * 5) + ' 100 100)'" />
+                <text *ngFor="let dir of ['N', 'E', 'S', 'W']; let i = index" 
+                    x="100" y="32" text-anchor="middle" [attr.fill]="dir === 'N' ? 'var(--color-danger)' : 'var(--color-text-primary)'" 
+                    font-size="16" font-weight="bold" [attr.transform]="'rotate(' + (i * 90) + ' 100 100)'">{{dir}}</text>
+                <text *ngFor="let dir of ['NE', 'SE', 'SW', 'NW']; let i = index" 
+                    x="100" y="32" text-anchor="middle" fill="var(--color-text-secondary)" 
+                    font-size="12" [attr.transform]="'rotate(' + (45 + i * 90) + ' 100 100)'">{{dir}}</text>
+            </svg>
+        </div>
+        <div class="compass-needle"></div>
+        <div class="absolute w-2.5 h-2.5 bg-gray-500 rounded-full border-2 border-gray-400 z-10"></div>
+    </div>
+
+    <div class="text-center my-4 p-4 bg-[var(--color-surface)] rounded-lg w-52 border border-[var(--color-surface-light)] flex-shrink-0">
+        <div class="text-5xl font-mono">{{ displayHeading !== null ? displayHeading.toFixed(0) : '---' }}<span class="text-3xl align-top">°</span></div>
+        <div class="text-xl text-[var(--color-accent-hover)] font-semibold">{{ getDirection(displayHeading) }}</div>
+        <div *ngIf="orientation.accuracy !== null" class="text-xs text-[var(--color-text-secondary)] font-mono">±{{ orientation.accuracy.toFixed(0) }}°</div>
+    </div>
+    
+    <button (click)="isCalibrating = true" class="absolute top-4 right-4 p-2 rounded-full bg-[var(--color-surface)] hover:bg-[var(--color-surface-light)] transition-colors" title="Calibrate Compass">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+    </button>
+    
+    <div *ngIf="isCalibrating" class="fixed inset-0 bg-black/70 z-30 flex items-center justify-center" (click)="isCalibrating = false">
+        <div class="bg-[var(--color-surface)] p-4 rounded-lg shadow-2xl border border-[var(--color-surface-light)] w-11/12 max-w-sm" (click)="$event.stopPropagation()">
+            <h3 class="text-lg font-bold text-center mb-3">Compass Calibration</h3>
+            <div class="flex items-center justify-center space-x-2 mb-3">
+                <span class="text-sm text-[var(--color-text-secondary)]">Offset:</span>
+                <input type="number" step="0.1" [value]="calibrationOffset" #offsetInput (change)="handleSetOffset(offsetInput.valueAsNumber)" class="w-24 bg-[var(--color-background)] text-center text-lg font-mono p-1 rounded border border-[var(--color-surface-lighter)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+                <span class="text-lg">°</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2 text-sm mb-4">
+                <button (click)="handleSetOffset(calibrationOffset - 10)" class="p-2 rounded bg-[var(--color-surface-light)] hover:bg-[var(--color-surface-lighter)]">-10</button>
+                <button (click)="handleSetOffset(calibrationOffset - 1)" class="p-2 rounded bg-[var(--color-surface-light)] hover:bg-[var(--color-surface-lighter)]">-1</button>
+                <button (click)="handleSetOffset(calibrationOffset + 1)" class="p-2 rounded bg-[var(--color-surface-light)] hover:bg-[var(--color-surface-lighter)]">+1</button>
+                <button (click)="handleSetOffset(calibrationOffset + 10)" class="p-2 rounded bg-[var(--color-surface-light)] hover:bg-[var(--color-surface-lighter)]">+10</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <button (click)="handleSetOffset(0)" class="w-full bg-[var(--color-danger)]/80 hover:bg-[var(--color-danger)] text-white font-semibold py-2 px-4 rounded transition-colors">Reset</button>
+                <button (click)="isCalibrating = false" class="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-bold py-2 px-4 rounded transition-colors">Done</button>
+            </div>
+        </div>
+    </div>
+    
+    <div *ngIf="orientation.error" class="mt-4 text-center">
+        <p class="text-red-400">{{ orientation.error }}</p>
+        <button *ngIf="orientation.error.includes('permission')" (click)="orientationService.requestPermission()" class="mt-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-bold py-2 px-4 rounded">Grant Permission</button>
+    </div>
+</div>

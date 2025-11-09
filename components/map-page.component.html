@@ -1,0 +1,159 @@
+<div 
+  class="w-full h-full relative" 
+  [class.cursor-crosshair]="drawingTool !== DrawingTool.None" 
+  [class.drawing-active]="drawingTool !== DrawingTool.None"
+  [class.cursor-default]="drawingTool === DrawingTool.None"
+  [class.map-mode-head-up]="mapOrientationMode === MapOrientationMode.HeadUp"
+  [class.capturing]="isCapturing"
+  [ngStyle]="mapOrientationMode === MapOrientationMode.HeadUp ? {'--map-rotation': mapRotation + 'deg', '--map-rotation-reverse': -mapRotation + 'deg'} : {}">
+    
+    <div class="capturing-overlay" *ngIf="isCapturing"></div>
+    
+    <!-- Info Panels -->
+    <div class="absolute top-2 left-2 right-2 z-[1000] flex justify-between pointer-events-none gap-2">
+        <div class="info-panel">
+            <p class="info-panel-title">CURRENT</p>
+            <ng-container *ngIf="currentIndianGrid; else acquiringTpl">
+                <div class="text-xs">
+                    <p><span class="info-panel-label">E:</span> {{currentIndianGrid.easting.toFixed(0)}}</p>
+                    <p><span class="info-panel-label">N:</span> {{currentIndianGrid.northing.toFixed(0)}}</p>
+                    <p><span class="info-panel-label">Zone:</span> {{currentIndianGrid.zone}}</p>
+                </div>
+            </ng-container>
+            <div class="info-panel-footer">
+                <span>H.ACC: {{location?.accuracy !== null ? location?.accuracy?.toFixed(1) + 'm' : '--'}}</span>
+            </div>
+        </div>
+        <div class="info-panel">
+            <p class="info-panel-title">CURSOR</p>
+            <ng-container *ngIf="crosshairCoords.indianGrid; else acquiringTpl">
+                <div class="text-xs">
+                    <p><span class="info-panel-label">E:</span> {{crosshairCoords.indianGrid.easting.toFixed(0)}}</p>
+                    <p><span class="info-panel-label">N:</span> {{crosshairCoords.indianGrid.northing.toFixed(0)}}</p>
+                    <p><span class="info-panel-label">Zone:</span> {{crosshairCoords.indianGrid.zone}}</p>
+                </div>
+            </ng-container>
+            <div class="info-panel-footer">
+                <span>Brg: {{bearingToCursor !== null ? bearingToCursor.toFixed(0) + '°' : '--'}}</span>
+                <span>Dist: {{distanceToCursor !== null ? measurementService.formatDistance(distanceToCursor) : '--'}}</span>
+                <span>Hdg: {{deviceOrientation?.heading !== null ? deviceOrientation?.heading.toFixed(0) + '°' : '--'}}</span>
+            </div>
+        </div>
+    </div>
+    <ng-template #acquiringTpl>
+        <p class="text-[var(--color-text-secondary)] animate-pulse text-xs">Acquiring...</p>
+    </ng-template>
+
+    <!-- Navigation Display -->
+    <app-navigation-display 
+        *ngIf="navigatingTo && currentPosition"
+        [targetPoint]="navigatingTo"
+        [currentPosition]="currentPosition"
+        [currentHeading]="deviceOrientation?.heading"
+        (stop)="navigatingTo = null">
+    </app-navigation-display>
+
+    <!-- Map Container -->
+    <div #mapContainer class="h-full w-full bg-gray-900"></div>
+    <div *ngIf="map" class="crosshair-marker">+</div>
+
+    <!-- Child Components Rendered as Overlays -->
+    <ng-container *ngIf="map">
+        <div class="absolute top-12 right-2 z-[1000]">
+          <app-north-arrow
+            [heading]="deviceOrientation?.heading"
+            [orientationMode]="mapOrientationMode"
+            (modeChange)="mapOrientationMode = $event"
+            [compassError]="deviceOrientation?.error"
+            (requestPermission)="orientationService.requestPermission()">
+          </app-north-arrow>
+        </div>
+
+        <app-scale-bar [map]="map"></app-scale-bar>
+        <app-utm-grid *ngIf="coordSystem === CoordSystem.UTM_WGS84" [map]="map" [color]="gridSettings.color" [opacity]="gridSettings.opacity" [weight]="gridSettings.weight" [forcedZone]="manualZone" [gridSpacing]="gridSpacing"></app-utm-grid>
+        <app-indian-grid *ngIf="coordSystem === CoordSystem.IndianGrid_Everest1930" [map]="map" [color]="gridSettings.color" [opacity]="gridSettings.opacity" [weight]="gridSettings.weight" [zone]="indianGridZone" [gridSpacing]="gridSpacing"></app-indian-grid>
+
+        <app-marked-points-display [map]="map" [points]="markedPoints" [startPosition]="currentPosition"></app-marked-points-display>
+        <app-measurement-display [map]="map" [shapes]="drawnShapes" [tempPoints]="tempPoints" [mousePos]="mousePos" [drawingTool]="drawingTool" [drawingColor]="drawingColor" [drawingWeight]="drawingWeight"></app-measurement-display>
+        <app-editable-image-overlay *ngIf="imageOverlay" [map]="map" [overlay]="imageOverlay" (overlayChange)="imageOverlay = $event"></app-editable-image-overlay>
+    </ng-container>
+    
+    <!-- Map Controls (FAB Menu) -->
+    <div class="absolute bottom-20 right-2 z-[1000] flex flex-col items-end space-y-2">
+      <div *ngIf="isFabOpen" class="flex flex-col items-end space-y-2 fab-menu-items">
+        <app-drawing-tools
+            [activeTool]="drawingTool"
+            (toolSelect)="drawingTool = $event"
+            (clear)="drawnShapes = []; tempPoints = []"
+            [drawingColor]="drawingColor"
+            (colorChange)="drawingColor = $event"
+            [drawingWeight]="drawingWeight"
+            (weightChange)="drawingWeight = $event">
+        </app-drawing-tools>
+        <app-map-layer-control [currentLayer]="activeLayer" (layerChange)="handleLayerChange($event)"></app-map-layer-control>
+        <button (click)="isMarkedPointsPanelOpen = !isMarkedPointsPanelOpen" class="fab-button" [ngClass]="isMarkedPointsPanelOpen ? 'bg-green-600 hover:bg-green-500' : 'bg-slate-700 hover:bg-slate-600'" title="Mark Points">
+            <svg class="h-5 w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        </button>
+        <button (click)="handleCenterMap()" class="fab-button bg-blue-600 hover:bg-blue-500" title="Center on My Location">
+            <svg class="h-5 w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="8"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>
+        </button>
+        <button (click)="handleCaptureMap()" class="fab-button bg-slate-700 hover:bg-slate-600" title="Capture Map">
+            <svg class="h-5 w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+        </button>
+        <button (click)="isSettingsOpen = true" class="fab-button bg-slate-700 hover:bg-slate-600" title="Settings">
+            <svg class="h-5 w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+      <button (click)="isFabOpen = !isFabOpen" class="fab-button bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white w-14 h-14" title="Map Controls">
+        <svg class="h-7 w-7 transition-transform duration-200" [class.rotate-45]="isFabOpen" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </button>
+    </div>
+
+    <!-- Panels -->
+    <app-marked-points-panel 
+        [isOpen]="isMarkedPointsPanelOpen"
+        (closePanel)="isMarkedPointsPanelOpen = false"
+        [points]="markedPoints"
+        [coordSystem]="coordSystem"
+        (addCurrentLocation)="handleAddCurrentLocation()"
+        (delete)="markedPoints = markedPoints.filter(p => p.id !== $event)"
+        (undo)="markedPoints = markedPoints.slice(0, -1)"
+        (clear)="markedPoints = []"
+        (goTo)="handleStartNavigation($event)"
+        (saveRoute)="handleSaveRoute()">
+    </app-marked-points-panel>
+    
+    <app-settings-menu 
+        [isOpen]="isSettingsOpen"
+        (close)="isSettingsOpen = false"
+        [map]="map"
+        [(coordSystem)]="coordSystem"
+        [(manualZone)]="manualZone"
+        [(indianGridZone)]="indianGridZone"
+        [currentUtm]="currentUtm"
+        [currentIndianGrid]="currentIndianGrid"
+        (goTo)="handleGoTo($event)"
+        [(gridSettings)]="gridSettings"
+        [(gridSpacing)]="gridSpacing"
+        [(mapOrientationMode)]="mapOrientationMode"
+        [compassError]="deviceOrientation?.error"
+        (requestCompassPermission)="orientationService.requestPermission()"
+        (navigateToWaypoint)="handleStartNavigation($event)"
+        (projectPoint)="projectionRequest = $event"
+        [heading]="deviceOrientation?.heading"
+        (saveView)="saveMapView()"
+        (restoreView)="restoreView()"
+        [isViewSaved]="!!savedView"
+        (openOfflineManager)="isOfflineManagerOpen = true"
+        [(imageOverlay)]="imageOverlay"
+        >
+    </app-settings-menu>
+    
+    <app-offline-map-downloader
+        [isOpen]="isOfflineManagerOpen"
+        (close)="isOfflineManagerOpen = false"
+        [map]="map"
+        [currentTileUrl]="tileLayers[activeLayer].url"
+        >
+    </app-offline-map-downloader>
+</div>

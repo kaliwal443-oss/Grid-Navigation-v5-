@@ -1,0 +1,23 @@
+<button (click)="handleClick()"
+    [ngClass]="{
+        'bg-amber-500 hover:bg-amber-400': orientationMode === MapOrientationMode.HeadUp,
+        'bg-slate-700 hover:bg-slate-600': orientationMode !== MapOrientationMode.HeadUp,
+        'text-amber-400 animate-pulse': compassError && compassError.includes('permission')
+    }"
+    class="p-2.5 rounded-full text-white w-12 h-12 flex items-center justify-center shadow-lg transition-colors"
+    [title]="compassError && compassError.includes('permission') ? 'Enable compass' : title">
+    
+    <ng-container *ngIf="!compassError || !compassError.includes('permission')">
+        <div [ngStyle]="rotationStyle">
+            <svg width="20" height="20" viewBox="0 0 24 24" class="mx-auto">
+                <polygon points="12,2 18,22 12,17" [attr.fill]="orientationMode === MapOrientationMode.HeadUp ? 'white' : 'var(--color-danger)'" />
+                <polygon points="12,2 6,22 12,17" [attr.fill]="orientationMode === MapOrientationMode.HeadUp ? '#ccc' : 'var(--color-text-primary)'" />
+            </svg>
+        </div>
+    </ng-container>
+    
+    <svg *ngIf="compassError && compassError.includes('permission')" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+    </svg>
+</button>

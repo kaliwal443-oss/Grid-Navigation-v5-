@@ -1,0 +1,84 @@
+<div class="h-full w-full bg-[var(--color-background)] text-white p-2 sm:p-4 flex flex-col overflow-y-auto">
+    <h1 class="text-xl font-bold text-center text-[var(--color-accent-hover)] mb-4">Sun & Moon</h1>
+    <div class="bg-[var(--color-surface)] p-3 rounded-lg mb-4 border border-[var(--color-surface-light)]">
+        <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <div class="flex items-center text-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--color-text-secondary)] mr-2 flex-shrink-0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <div class="font-mono text-xs">
+                    <div *ngIf="location?.lat !== null && location?.lon !== null; else gettingLocation">
+                        <p>Lat/Lon: {{ location.lat.toFixed(4) }}, {{ location.lon.toFixed(4) }}</p>
+                        <p class="text-[var(--color-text-secondary)]">Indian Grid: {{ astroData?.indianGrid ? astroData.indianGrid.easting.toFixed(0) + 'E ' + astroData.indianGrid.northing.toFixed(0) + 'N' : '...' }}</p>
+                    </div>
+                    <ng-template #gettingLocation><span class="animate-pulse">{{ location?.error || 'Getting location...' }}</span></ng-template>
+                </div>
+            </div>
+            <input type="datetime-local" [value]="formatDateInput(date)" (change)="onDateChange($any($event.target).value)" class="input-field font-mono text-sm"/>
+        </div>
+    </div>
+    <div *ngIf="!astroData" class="flex-grow flex items-center justify-center"><p class="text-[var(--color-text-secondary)] animate-pulse">Waiting for location data...</p></div>
+    
+    <ng-container *ngIf="astroData">
+        <div class="grid md:grid-cols-2 gap-4">
+            <!-- Sun Info Card -->
+            <div class="bg-[var(--color-surface)] p-4 rounded-lg border border-[var(--color-surface-light)] h-full flex flex-col">
+                <h2 class="text-lg font-bold text-[var(--color-accent)] flex items-center mb-3">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    <span class="ml-2">Sun</span>
+                </h2>
+                <!-- Sun Timeline to be implemented as a component -->
+                <div class="pt-2 border-t border-[var(--color-surface-light)]/50">
+                     <div class="flex justify-between items-center text-sm py-1">
+                        <span class="text-[var(--color-text-secondary)]">Sunrise</span>
+                        <span class="font-mono font-bold text-[var(--color-text-primary)] text-right">
+                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline mr-2 text-[var(--color-text-secondary)]"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="8 6 12 2 16 6"/></svg>
+                           {{ formatTime(astroData.sunTimes.sunrise) }}
+                        </span>
+                    </div>
+                     <div class="flex justify-between items-center text-sm py-1">
+                        <span class="text-[var(--color-text-secondary)]">Sunset</span>
+                        <span class="font-mono font-bold text-[var(--color-text-primary)] text-right">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline mr-2 text-[var(--color-text-secondary)]"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="16 5 12 9 8 5"/></svg>
+                          {{ formatTime(astroData.sunTimes.sunset) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Moon Info Card -->
+            <div class="bg-[var(--color-surface)] p-4 rounded-lg border border-[var(--color-surface-light)] h-full flex flex-col">
+                 <h2 class="text-lg font-bold text-[var(--color-accent)] flex items-center mb-3">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                    <span class="ml-2">Moon</span>
+                </h2>
+                <div *ngIf="moonIlluminationData && moonPositionData" class="flex-grow">
+                    <!-- Moon Display Component -->
+                    <div class="flex items-center gap-4">
+                        <!-- Moon Phase SVG to be implemented -->
+                        <div class="flex-grow space-y-1 text-sm">
+                            <p class="font-bold text-base text-[var(--color-accent-hover)]">{{ getPhaseName(moonIlluminationData.phase) }}</p>
+                            <p><span class="text-[var(--color-text-secondary)]">Illumination:</span> {{ (moonIlluminationData.fraction * 100).toFixed(1) }}%</p>
+                            <p class="font-mono bg-black/20 px-2 py-1 rounded w-fit text-lg">{{ moonDisplayDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</p>
+                        </div>
+                    </div>
+                    <div class="pt-2 mt-2">
+                        <input type="range" min="0" max="23" step="1" [value]="moonDisplayHour" (input)="moonDisplayHour = $any($event.target).value; updateMoonDisplayData()" class="w-full h-2 rounded-lg appearance-none cursor-pointer slider-thumb" [style.background]="getSliderBackground()" />
+                        <div class="flex justify-between text-xs text-[var(--color-text-secondary)] mt-1"><span>00:00</span><span>12:00</span><span>23:00</span></div>
+                    </div>
+                    <div class="pt-2 mt-2 border-t border-[var(--color-surface-light)] grid grid-cols-2 gap-x-4 text-sm">
+                        <div class="flex justify-between items-center text-sm py-1"><span class="text-[var(--color-text-secondary)]">Azimuth</span><span class="font-mono font-bold text-[var(--color-text-primary)] text-right">{{ ((moonPositionData.azimuth * 180 / Math.PI + 180) % 360).toFixed(1) }}°</span></div>
+                        <div class="flex justify-between items-center text-sm py-1"><span class="text-[var(--color-text-secondary)]">Altitude</span><span class="font-mono font-bold text-[var(--color-text-primary)] text-right">{{ (moonPositionData.altitude * 180 / Math.PI).toFixed(1) }}°</span></div>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-[var(--color-surface-light)]/50">
+                    <div *ngIf="astroData.moonTimes.alwaysUp"><div class="flex justify-between items-center text-sm py-1"><span class="text-[var(--color-text-secondary)]">Visibility</span><span class="font-mono font-bold text-[var(--color-text-primary)] text-right">Always Up</span></div></div>
+                    <div *ngIf="astroData.moonTimes.alwaysDown"><div class="flex justify-between items-center text-sm py-1"><span class="text-[var(--color-text-secondary)]">Visibility</span><span class="font-mono font-bold text-[var(--color-text-primary)] text-right">Always Down</span></div></div>
+                    <ng-container *ngIf="!astroData.moonTimes.alwaysUp && !astroData.moonTimes.alwaysDown">
+                        <div class="flex justify-between items-center text-sm py-1"><span class="text-[var(--color-text-secondary)]">Moonrise</span><span class="font-mono font-bold text-[var(--color-text-primary)] text-right">{{ formatTime(astroData.moonTimes.rise) }}</span></div>
+                        <div class="flex justify-between items-center text-sm py-1"><span class="text-[var(--color-text-secondary)]">Moonset</span><span class="font-mono font-bold text-[var(--color-text-primary)] text-right">{{ formatTime(astroData.moonTimes.set) }}</span></div>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+        <!-- Calendar Component to be implemented -->
+    </ng-container>
+</div>

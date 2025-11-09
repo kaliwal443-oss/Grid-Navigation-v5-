@@ -1,0 +1,70 @@
+<div class="h-full w-full bg-[var(--color-background)] text-white p-2 sm:p-4 flex flex-col overflow-y-auto">
+    <h1 class="text-xl font-bold text-center text-[var(--color-accent-hover)] mb-4 flex-shrink-0">GPS Status</h1>
+    
+    <div *ngIf="location?.error" class="text-center text-red-400 bg-red-900/50 p-2 rounded-md font-mono mb-4">{{ location.error }}</div>
+
+    <div *ngIf="location" class="grid lg:grid-cols-3 gap-4">
+        <div class="space-y-4">
+            <div class="gps-info-box">
+                <p class="gps-info-box-title">Coordinates (WGS84)</p>
+                <p *ngIf="location.lat && location.lon; else acquiringSignal" class="text-lg">{{ location.lat.toFixed(6) }}°, {{ location.lon.toFixed(6) }}°</p>
+                <ng-template #acquiringSignal><p class="animate-pulse">Acquiring signal...</p></ng-template>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="gps-data-card">
+                    <div class="gps-data-card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg></div>
+                    <div><p class="gps-data-card-title">Altitude</p><p class="gps-data-card-value">{{ location.altitude !== null ? location.altitude.toFixed(1) + 'm' : '--' }}</p></div>
+                </div>
+                <div class="gps-data-card">
+                    <div class="gps-data-card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m14 16-4-4 4-4"/></svg></div>
+                    <div><p class="gps-data-card-title">Speed</p><p class="gps-data-card-value">{{ location.speed !== null ? location.speed.toFixed(1) + ' m/s' : '--' }}</p></div>
+                </div>
+                <div class="gps-data-card">
+                    <div class="gps-data-card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></div>
+                    <div><p class="gps-data-card-title">Heading</p><p class="gps-data-card-value">{{ location.heading !== null ? location.heading.toFixed(0) + '° ' + getDirection(location.heading) : '--' }}</p></div>
+                </div>
+                <div class="gps-data-card">
+                    <div class="gps-data-card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.93 19.07a10 10 0 1 1 14.14-14.14"/><path d="m2 13 7.5-7.5"/><path d="M11 5.5 13 3"/><path d="M15 2.5 17 4"/></svg></div>
+                    <div><p class="gps-data-card-title">H. Accuracy</p><p class="gps-data-card-value">{{ location.accuracy !== null ? '± ' + location.accuracy.toFixed(1) + 'm' : '--' }}</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="gps-info-box flex flex-col justify-center items-center">
+            <div class="relative w-full aspect-square max-w-[400px] mx-auto">
+                <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <circle cx="50" cy="50" r="48" fill="none" stroke="var(--color-surface-light)" stroke-width="0.5" />
+                    <circle cx="50" cy="50" r="32" fill="none" stroke="var(--color-surface-light)" stroke-width="0.5" stroke-dasharray="2 2" />
+                    <circle cx="50" cy="50" r="16" fill="none" stroke="var(--color-surface-light)" stroke-width="0.5" stroke-dasharray="2 2" />
+                    <line x1="2" y1="50" x2="98" y2="50" stroke="var(--color-surface-light)" stroke-width="0.5" />
+                    <line x1="50" y1="2" x2="50" y2="98" stroke="var(--color-surface-light)" stroke-width="0.5" />
+                    <text x="50" y="5" text-anchor="middle" fill="var(--color-text-secondary)" font-size="4" class="font-sans">N</text>
+                    <text x="50" y="98" text-anchor="middle" fill="var(--color-text-secondary)" font-size="4" class="font-sans">S</text>
+                    <text x="5" y="53" text-anchor="start" fill="var(--color-text-secondary)" font-size="4" class="font-sans">W</text>
+                    <text x="95" y="53" text-anchor="end" fill="var(--color-text-secondary)" font-size="4" class="font-sans">E</text>
+                    <g *ngFor="let sat of satellites" [attr.transform]="getSatelliteTransform(sat)">
+                        <circle r="2.5" [attr.fill]="sat.color" class="satellite-sky-plot-dot" [style.color]="sat.color" />
+                        <text y="1" x="4" fill="var(--color-text-primary)" font-size="3" class="font-mono">{{ sat.id }}</text>
+                    </g>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="gps-info-box flex flex-col">
+            <h2 class="gps-info-box-title mb-2">Satellites In View ({{ satellites.length }})</h2>
+            <div class="grid grid-cols-5 text-center font-bold text-[var(--color-text-secondary)] text-xs uppercase tracking-wider border-b border-[var(--color-surface-light)] pb-1">
+                <span>ID</span><span>System</span><span>Elev</span><span>Azim</span><span>SNR</span>
+            </div>
+            <div class="flex-grow overflow-y-auto space-y-1 pt-1 pr-1">
+                <div *ngFor="let sat of satellites" class="grid grid-cols-5 text-center font-mono text-sm py-0.5 rounded odd:bg-white/5">
+                    <span class="font-bold" [style.color]="sat.color">{{ sat.id }}</span>
+                    <span class="text-[var(--color-text-secondary)] text-[10px] truncate self-center font-sans">{{ sat.constellation }}</span>
+                    <span>{{ sat.elevation }}°</span>
+                    <span>{{ sat.azimuth }}°</span>
+                    <span [ngClass]="{'text-green-400': sat.snr > 35, 'text-yellow-400': sat.snr > 25 && sat.snr <= 35, 'text-red-400': sat.snr <= 25}">{{ sat.snr }} dB</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <p class="text-xs text-gray-600 text-center w-full pt-4 flex-shrink-0">Satellite constellation, ID, and signal data are simulated for visualization based on location accuracy.</p>
+</div>

@@ -1,0 +1,13 @@
+<div class="absolute bottom-5 left-2 p-1 text-xs font-mono z-[1000] pointer-events-none">
+    <div class="text-center mb-1 text-[var(--color-text-secondary)]" [style.textShadow]="'0 1px 3px black, 0 0 5px black'">
+        {{ scaleInfo.ratioText }}
+    </div>
+    <div class="flex items-end">
+        <div class="border-l-2 border-white h-2"></div>
+        <div class="border-b-2 border-white h-0" [style.width.px]="scaleInfo.barWidth"></div>
+        <div class="border-r-2 border-white h-2"></div>
+        <span class="pl-2 leading-none text-[var(--color-text-primary)]" [style.textShadow]="'0 1px 3px black, 0 0 5px black'">
+            {{ scaleInfo.barText }}
+        </span>
+    </div>
+</div>

@@ -1,0 +1,41 @@
+<div class="h-full w-full relative bg-black">
+    <video #video autoplay playsinline class="w-full h-full object-cover"></video>
+    
+    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <div class="crosshair-marker">+</div>
+        <div *ngIf="arData.distance !== null && arData.bearing !== null && !message" class="ar-crosshair-data">
+            <span>Dist: {{ arData.distance.toFixed(0) }}m</span>
+            <span>Brg: {{ arData.bearing.toFixed(0) }}°</span>
+        </div>
+    </div>
+
+    <div class="absolute top-4 left-4 right-4 z-10 pointer-events-auto">
+         <div class="bg-gray-900/80 backdrop-blur-sm rounded-lg p-3 text-sm font-mono shadow-xl border border-[var(--color-surface-light)] w-full max-w-md mx-auto">
+            <p class="info-panel-title text-center">CROSSHAIR TARGET</p>
+            <div *ngIf="arData.indianGrid && !message; else messageTpl">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                    <div><p class="info-panel-label">Easting:</p><p class="text-lg">{{ arData.indianGrid.easting.toFixed(0) }}</p></div>
+                    <div><p class="info-panel-label">Northing:</p><p class="text-lg">{{ arData.indianGrid.northing.toFixed(0) }}</p></div>
+                    <div>
+                        <p class="info-panel-label">Distance:</p>
+                        <p class="text-lg" [class.text-yellow-400]="isAccuracyLow">
+                            {{ arData.distance?.toFixed(0) }} <small>±{{ location?.accuracy?.toFixed(0) }}m</small>
+                        </p>
+                    </div>
+                    <div><p class="info-panel-label">Bearing:</p><p class="text-lg">{{ arData.bearing?.toFixed(0) }}°</p></div>
+                </div>
+            </div>
+            <ng-template #messageTpl>
+                <div class="text-center text-lg text-[var(--color-text-secondary)] py-4 h-[76px] flex items-center justify-center">
+                    <div *ngIf="permissionError" class="ar-message error"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/><line x1="2" y1="2" x2="22" y2="22"/></svg><p>{{ permissionError }}</p></div>
+                    <div *ngIf="location?.error && !permissionError" class="ar-message warning"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><p>GPS Error: {{ location.error }}</p></div>
+                    <p *ngIf="!permissionError && !location?.error">{{ message || "Acquiring lock..." }}</p>
+                </div>
+            </ng-template>
+            <div *ngIf="isAccuracyLow" class="ar-message warning text-xs mt-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Low GPS accuracy. Readings may be imprecise.
+            </div>
+         </div>
+    </div>
+</div>
